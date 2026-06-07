@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Letras de Canciones</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --text-color: #333333;
+            --border-color: #e0e0e0;
+            --backup-color: #27ae60;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        /* Buscador */
+        .search-box {
+            margin-bottom: 20px;
+        }
+
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-bottom: 10px;
+            outline: none;
+            transition: border 0.2s;
+        }
+
+        input[type="text"]:focus, textarea:focus {
+            border-color: var(--accent-color);
+        }
+
+        /* Formulario ocultable */
+        .form-section {
+            display: none;
+            border-top: 2px solid var(--bg-color);
+            padding-top: 15px;
+            margin-top: 15px;
+        }
+
+        .form-section.active {
+            display: block;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+        }
+
+        textarea {
+            height: 150px;
+            resize: vertical;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-bottom: 10px;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button.btn-accent {
+            background-color: var(--accent-color);
+        }
+
+        /* Lista de canciones */
+        .song-list {
+            margin-top: 20px;
+            list-style: none;
+        }
+
+        .song-item {
+            background: var(--bg-color);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .song-item:hover {
+            background: #e9ecef;
+        }
+
+        .song-title {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: var(--primary-color);
+        }
+
+        .song-meta {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            margin-top: 4px;
+        }
+
+        /* Vista de canción individual */
+        .view-section {
+            display: none;
+            border-top: 2px solid var(--bg-color);
+            padding-top: 15px;
+            margin-top: 15px;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        .lyrics-display {
+            white-space: pre-wrap;
+            background: #fff;
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 1.05rem;
+            line-height: 1.6;
+        }
+
+        .btn-danger {
+            background-color: #e74c3c;
+            margin-top: 15px;
+        }
+
+        /* Sección de Copia de Seguridad */
+        .backup-section {
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 2px dashed var(--border-color);
+            text-align: center;
+        }
+
+        .backup-section h4 {
+            color: #7f8c8d;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .backup-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-backup {
+            background-color: var(--backup-color);
+            font-size: 0.85rem;
+            padding: 10px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🎵 Mis Letras</h1>
+
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Buscar palabras dentro de la letra..." oninput="filterSongs()">
+    </div>
+
+    <button id="toggleFormBtn" onclick="toggleForm()" class="btn-accent">+ Agregar Nueva Canción</button>
+    <button id="backToListBtn" onclick="showList()" style="display: none;">← Volver a la Lista</button>
+
+    <ul id="songList" class="song-list"></ul>
+
+    <div id="viewSection" class="view-section">
+        <h2 id="viewTitle"></h2>
+        <div id="viewMeta" class="song-meta"></div>
+        <div id="viewLyrics" class="lyrics-display"></div>
+        <button onclick="deleteCurrentSong()" class="btn-danger">Eliminar Canción</button>
+    </div>
+
+    <div id="formSection" class="form-section">
+        <h3>Nueva Canción</h3>
+        <input type="text" id="songTitle" placeholder="Título (Obligatorio)">
+        <div class="row">
+            <input type="text" id="songArtist" placeholder="Artista (Opcional)">
+            <input type="text" id="songTone" placeholder="Tono (Opcional)">
+        </div>
+        <textarea id="songLyrics" placeholder="Escribí o pegá la letra acá..."></textarea>
+        <button onclick="saveSong()">Guardar Canción</button>
+    </div>
+
+    <div id="backupSection" class="backup-section">
+        <h4>Copia de Seguridad</h4>
+        <div class="backup-buttons">
+            <button onclick="exportBackup()" class="btn-backup">💾 Exportar Respaldo</button>
+            <button onclick="document.getElementById('fileInput').click()" class="btn-backup" style="background-color: #8e44ad;">📂 Importar Respaldo</button>
+        </div>
+        <input type="file" id="fileInput" accept=".json" onchange="importBackup(event)">
+    </div>
+</div>
+
+<script>
+    let songs = JSON.parse(localStorage.getItem('songs')) || [];
+    let currentViewingIndex = null;
+
+    function saveToLocalStorage() {
+        localStorage.setItem('songs', JSON.stringify(songs));
+    }
+
+    function renderList(songsToDisplay = songs) {
+        const listContainer = document.getElementById('songList');
+        listContainer.innerHTML = '';
+
+        if (songsToDisplay.length === 0) {
+            listContainer.innerHTML = '<li style="text-align:center; color:#7f8c8d; padding:20px;">No se encontraron canciones.</li>';
+            return;
+        }
+
+        songsToDisplay.forEach((song) => {
+            const originalIndex = songs.findIndex(s => s.id === song.id);
+            
+            const li = document.createElement('li');
+            li.className = 'song-item';
+            li.onclick = () => viewSong(originalIndex);
+
+            let metaText = '';
+            if (song.artist) metaText += `Artista: ${song.artist}`;
+            if (song.tone) metaText += `${metaText ? ' | ' : ''}Tono: ${song.tone}`;
+
+            li.innerHTML = `
+                <div class="song-title">${song.title}</div>
+                ${metaText ? `<div class="song-meta">${metaText}</div>` : ''}
+            `;
+            listContainer.appendChild(li);
+        });
+    }
+
+    function filterSongs() {
+        const query = document.getElementById('searchInput').value.toLowerCase().trim();
+        if (!query) {
+            renderList(songs);
+            return;
+        }
+        const filtered = songs.filter(song => 
+            song.lyrics.toLowerCase().includes(query)
+        );
+        renderList(filtered);
+    }
+
+    function saveSong() {
+        const title = document.getElementById('songTitle').value.trim();
+        const artist = document.getElementById('songArtist').value.trim();
+        const tone = document.getElementById('songTone').value.trim();
+        const lyrics = document.getElementById('songLyrics').value.trim();
+
+        if (!title || !lyrics) {
+            alert('Por favor, completá al menos el Título y la Letra.');
+            return;
+        }
+
+        const newSong = {
+            id: Date.now(),
+            title,
+            artist,
+            tone,
+            lyrics
+        };
+
+        songs.push(newSong);
+        saveToLocalStorage();
+        
+        document.getElementById('songTitle').value = '';
+        document.getElementById('songArtist').value = '';
+        document.getElementById('songTone').value = '';
+        document.getElementById('songLyrics').value = '';
+        
+        toggleForm();
+        renderList();
+    }
+
+    function viewSong(index) {
+        currentViewingIndex = index;
+        const song = songs[index];
+
+        document.getElementById('viewTitle').innerText = song.title;
+        
+        let metaText = '';
+        if (song.artist) metaText += `Artista: ${song.artist}`;
+        if (song.tone) metaText += `${metaText ? ' | ' : ''}Tono: ${song.tone}`;
+        document.getElementById('viewMeta').innerText = metaText;
+        
+        document.getElementById('viewLyrics').innerText = song.lyrics;
+
+        // Ocultar elementos para lectura limpia
+        document.getElementById('songList').style.display = 'none';
+        document.getElementById('searchInput').style.display = 'none';
+        document.getElementById('toggleFormBtn').style.display = 'none';
+        document.getElementById('backupSection').style.display = 'none';
+        document.getElementById('formSection').classList.remove('active');
+        
+        document.getElementById('viewSection').classList.add('active');
+        document.getElementById('backToListBtn').style.display = 'block';
+    }
+
+    function showList() {
+        document.getElementById('viewSection').classList.remove('active');
+        document.getElementById('backToListBtn').style.display = 'none';
+        
+        document.getElementById('songList').style.display = 'block';
+        document.getElementById('searchInput').style.display = 'block';
+        document.getElementById('toggleFormBtn').style.display = 'block';
+        document.getElementById('backupSection').style.display = 'block';
+        
+        document.getElementById('searchInput').value = '';
+        renderList();
+    }
+
+    function toggleForm() {
+        const form = document.getElementById('formSection');
+        const btn = document.getElementById('toggleFormBtn');
+        
+        if (form.classList.contains('active')) {
+            form.classList.remove('active');
+            btn.innerText = '+ Agregar Nueva Canción';
+            document.getElementById('backupSection').style.display = 'block';
+        } else {
+            form.classList.add('active');
+            btn.innerText = '✕ Cancelar';
+            document.getElementById('viewSection').classList.remove('active');
+            document.getElementById('backToListBtn').style.display = 'none';
+            document.getElementById('songList').style.display = 'block';
+            document.getElementById('searchInput').style.display = 'block';
+            document.getElementById('backupSection').style.display = 'none';
+        }
+    }
+
+    function deleteCurrentSong() {
+        if (confirm('¿Seguro que querés eliminar esta canción?')) {
+            songs.splice(currentViewingIndex, 1);
+            saveToLocalStorage();
+            showList();
+        }
+    }
+
+    /* === FUNCIONES DE COPIA DE SEGURIDAD === */
+
+    // Descargar todas las canciones en un archivo .json
+    function exportBackup() {
+        if (songs.length === 0) {
+            alert('No hay canciones para exportar.');
+            return;
+        }
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(songs));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", "respaldo_letras.json");
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+    }
+
+    // Cargar canciones desde un archivo .json externo
+    function importBackup(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const importedSongs = JSON.parse(e.target.result);
+                
+                if (Array.isArray(importedSongs)) {
+                    if (confirm(`Se van a importar ${importedSongs.length} canciones. ¿Querés combinarlas con las que ya tenés? (Si ponés 'Cancelar', se reemplazarán por completo)`)) {
+                        // Combinar evitando IDs duplicados estructurados
+                        importedSongs.forEach(impSong => {
+                            if (!songs.some(s => s.id === impSong.id)) {
+                                songs.push(impSong);
+                            } else {
+                                impSong.id = Date.now() + Math.random(); // Forzar ID nuevo si coincide
+                                songs.push(impSong);
+                            }
+                        });
+                    } else {
+                        songs = importedSongs;
+                    }
+                    
+                    saveToLocalStorage();
+                    renderList();
+                    alert('¡Respaldo importado con éxito!');
+                } else {
+                    alert('El archivo no tiene el formato correcto.');
+                }
+            } catch (err) {
+                alert('Error al leer el archivo de respaldo.');
+            }
+            document.getElementById('fileInput').value = ''; // Resetear input
+        };
+        reader.readAsText(file);
+    }
+
+    renderList();
+</script>
+
+</body>
+</html>
