@@ -67,8 +67,15 @@
             border-color: var(--accent-color);
         }
 
-        /* Secciones ocultables */
-        .form-section, .view-section, .edit-section {
+        /* Secciones ocultables con espaciado controlado */
+        .form-section {
+            display: none;
+            border-bottom: 2px solid var(--bg-color);
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+
+        .view-section, .edit-section {
             display: none;
             border-top: 2px solid var(--bg-color);
             padding-top: 15px;
@@ -123,7 +130,7 @@
 
         /* Lista de canciones */
         .song-list {
-            margin-top: 20px;
+            margin-top: 10px;
             list-style: none;
         }
 
@@ -171,26 +178,16 @@
 <div class="container">
     <h1>🎵 Mis Letras</h1>
 
+    <!-- Buscador principal -->
     <div class="search-box" id="searchBox">
         <input type="text" id="searchInput" placeholder="Buscar palabras dentro de la letra..." oninput="filterSongs()">
     </div>
 
+    <!-- Botonera de control -->
     <button id="toggleFormBtn" onclick="toggleForm()" class="btn-accent">+ Agregar Nueva Canción</button>
     <button id="backToListBtn" onclick="showList()" style="display: none;">← Volver a la Lista</button>
 
-    <ul id="songList" class="song-list"></ul>
-
-    <div id="viewSection" class="view-section">
-        <h2 id="viewTitle"></h2>
-        <div id="viewMeta" class="song-meta"></div>
-        <div id="viewLyrics" class="lyrics-display"></div>
-        
-        <div class="btn-group">
-            <button onclick="showEditForm()" class="btn-warning">✏️ Editar Letra</button>
-            <button onclick="deleteCurrentSong()" class="btn-danger">Eliminar</button>
-        </div>
-    </div>
-
+    <!-- FORMULARIO NUEVA CANCIÓN (¡Ahora está acá arriba!) -->
     <div id="formSection" class="form-section">
         <h3>Nueva Canción</h3>
         <input type="text" id="songTitle" placeholder="Título (Obligatorio)">
@@ -202,6 +199,22 @@
         <button onclick="saveSong()">Guardar Canción</button>
     </div>
 
+    <!-- Lista de canciones -->
+    <ul id="songList" class="song-list"></ul>
+
+    <!-- VISTA DE DETALLE (LECTURA) -->
+    <div id="viewSection" class="view-section">
+        <h2 id="viewTitle"></h2>
+        <div id="viewMeta" class="song-meta"></div>
+        <div id="viewLyrics" class="lyrics-display"></div>
+        
+        <div class="btn-group">
+            <button onclick="showEditForm()" class="btn-warning">✏️ Editar Letra</button>
+            <button onclick="deleteCurrentSong()" class="btn-danger">Eliminar</button>
+        </div>
+    </div>
+
+    <!-- FORMULARIO DE EDICIÓN -->
     <div id="editSection" class="edit-section">
         <h3>Editar Canción</h3>
         <input type="text" id="editTitle" placeholder="Título (Obligatorio)">
@@ -216,6 +229,7 @@
         </div>
     </div>
 
+    <!-- COPIA DE SEGURIDAD -->
     <div id="backupSection" class="backup-section">
         <h4>Copia de Seguridad</h4>
         <div class="backup-buttons">
@@ -289,7 +303,6 @@
         songs.push(newSong);
         saveToLocalStorage();
         
-        // Limpiar
         document.getElementById('songTitle').value = '';
         document.getElementById('songArtist').value = '';
         document.getElementById('songTone').value = '';
@@ -309,9 +322,9 @@
         if (song.artist) metaText += `Artista: ${song.artist}`;
         if (song.tone) metaText += `${metaText ? ' | ' : ''}Tono: ${song.tone}`;
         document.getElementById('viewMeta').innerText = metaText;
+        
         document.getElementById('viewLyrics').innerText = song.lyrics;
 
-        // Visibilidad de pantallas
         document.getElementById('songList').style.display = 'none';
         document.getElementById('searchBox').style.display = 'none';
         document.getElementById('toggleFormBtn').style.display = 'none';
@@ -323,21 +336,18 @@
         document.getElementById('backToListBtn').style.display = 'block';
     }
 
-    /* === NUEVAS FUNCIONES DE EDICIÓN === */
-
     function showEditForm() {
         const song = songs[currentViewingIndex];
-        
-        // Cargar datos actuales en el formulario de edición
         document.getElementById('editTitle').value = song.title;
         document.getElementById('editArtist').value = song.artist || '';
         document.getElementById('editTone').value = song.tone || '';
         document.getElementById('editLyrics').value = song.lyrics;
 
-        // Cambiar de pantalla
         document.getElementById('viewSection').classList.remove('active');
         document.getElementById('editSection').classList.add('active');
     }
+
+    style = document.getElementById('editSection').style;
 
     function updateSong() {
         const title = document.getElementById('editTitle').value.trim();
@@ -350,15 +360,12 @@
             return;
         }
 
-        // Modificar los datos en el array
         songs[currentViewingIndex].title = title;
         songs[currentViewingIndex].artist = artist;
         songs[currentViewingIndex].tone = tone;
         songs[currentViewingIndex].lyrics = lyrics;
 
         saveToLocalStorage();
-        
-        // Volver a mostrar la canción ya actualizada
         viewSong(currentViewingIndex);
     }
 
@@ -366,8 +373,6 @@
         document.getElementById('editSection').classList.remove('active');
         document.getElementById('viewSection').classList.add('active');
     }
-
-    /* =================================== */
 
     function showList() {
         document.getElementById('viewSection').classList.remove('active');
@@ -390,16 +395,15 @@
         if (form.classList.contains('active')) {
             form.classList.remove('active');
             btn.innerText = '+ Agregar Nueva Canción';
-            document.getElementById('backupSection').style.display = 'block';
         } else {
             form.classList.add('active');
             btn.innerText = '✕ Cancelar';
+            // Mantiene el buscador y la lista visibles abajo, pero oculta la vista de detalle si estaba abierta
             document.getElementById('viewSection').classList.remove('active');
             document.getElementById('editSection').classList.remove('active');
             document.getElementById('backToListBtn').style.display = 'none';
             document.getElementById('songList').style.display = 'block';
             document.getElementById('searchBox').style.display = 'block';
-            document.getElementById('backupSection').style.display = 'none';
         }
     }
 
@@ -434,7 +438,7 @@
             try {
                 const importedSongs = JSON.parse(e.target.result);
                 if (Array.isArray(importedSongs)) {
-                    if (confirm(`Se van a importar ${importedSongs.length} canciones. ¿Querés combinarlas con las que ya tenés? (Si ponés 'Cancelar', se reemplazarán)`)) {
+                    if (confirm(`Se van a importar ${importedSongs.length} canciones. ¿Querés combinarlas con las que ya tenés?`)) {
                         importedSongs.forEach(impSong => {
                             if (!songs.some(s => s.id === impSong.id)) {
                                 songs.push(impSong);
